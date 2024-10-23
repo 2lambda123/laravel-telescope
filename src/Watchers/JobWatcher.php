@@ -210,47 +210,30 @@ class JobWatcher extends Watcher
 
         Telescope::$shouldRecord = false;
 
-        $command = $this->getCommand($payload['data']);
+        $batchId = $this->getBatchId($payload['data']);
 
         if ($wasRecordingEnabled) {
             Telescope::$shouldRecord = true;
         }
 
-        $properties = ExtractProperties::from(
-            $command
-        );
-
-        if (isset($properties['batchId'])) {
-            $batch = app(BatchRepository::class)->find($properties['batchId']);
+        if (isset($batchId)) {
+            $batch = app(BatchRepository::class)->find($batchId);
 
             if (is_null($batch)) {
                 return;
             }
 
             Telescope::recordUpdate(EntryUpdate::make(
-                $properties['batchId'], EntryType::BATCH, $batch->toArray()
+                $batchId, EntryType::BATCH, $batch->toArray()
             ));
         }
     }
 
-    /**
-     * Get the command from the given payload.
-     *
-     * @param  array  $data
-     * @return mixed
-     *
-     * @throws \RuntimeException
-     */
-    protected function getCommand(array $data)
+    private function getBatchId(array $data)
     {
-        if (Str::startsWith($data['command'], 'O:')) {
-            return unserialize($data['command']);
+        if(preg_match('/"batchId";s:\d+:"([^"]+)"/', $data['command'], $matches)){
+            return $matches[1];
         }
-
-        if (app()->bound(Encrypter::class)) {
-            return unserialize(app(Encrypter::class)->decrypt($data['command']));
-        }
-
-        throw new RuntimeException('Unable to extract job payload.');
+        return null;
     }
 }
