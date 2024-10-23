@@ -231,7 +231,7 @@ class JobWatcher extends Watcher
         if (preg_match('/"batchId";s:\d+:"([^"]+)"/', $data['command'], $matches)) {
             return $matches[1];
         }
-        
+
         return null;
     }
 }
