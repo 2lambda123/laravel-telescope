@@ -241,6 +241,7 @@ class JobWatcher extends Watcher
             }
 
             $properties = ExtractProperties::from($unserialized);
+
             return $properties['batchId'];
         } catch (\Exception|\Error) {
             if (preg_match('/"batchId";s:\d+:"([^"]+)"/', $data['command'], $matches)) {
