@@ -229,16 +229,39 @@ class JobWatcher extends Watcher
         }
     }
 
-    private function getBatchId(array $data)
+    /**
+     * Get the command from the given payload.
+     *
+     * @param  array  $data
+     * @return mixed
+     *
+     * @throws \RuntimeException
+     */
+    protected function getCommand(array $data)
+    {
+        if (Str::startsWith($data['command'], 'O:')) {
+            return unserialize($data['command']);
+        }
+
+        if (app()->bound(Encrypter::class)) {
+            return unserialize(app(Encrypter::class)->decrypt($data['command']));
+        }
+
+        throw new RuntimeException('Unable to extract job payload.');
+    }
+
+    /**
+     * Get the Batch ID from the given payload.
+     *
+     * @param  array  $data
+     * @return int|null
+     *
+     * @throws \RuntimeException
+     */
+    protected function getBatchId(array $data)
     {
         try {
-            if (Str::startsWith($data['command'], 'O:')) {
-                $unserialized = unserialize($data['command']);
-            } elseif (app()->bound(Encrypter::class)) {
-                $unserialized = unserialize(app(Encrypter::class)->decrypt($data['command']));
-            } else {
-                throw new RuntimeException('Unable to extract job payload.');
-            }
+            $command = $this->getCommand($data);
 
             $properties = ExtractProperties::from($unserialized);
 
