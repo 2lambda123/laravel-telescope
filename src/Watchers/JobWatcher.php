@@ -263,7 +263,7 @@ class JobWatcher extends Watcher
         try {
             $command = $this->getCommand($data);
 
-            $properties = ExtractProperties::from($unserialized);
+            $properties = ExtractProperties::from($command);
 
             return $properties['batchId'] ?? null;
         } catch (\Exception|\Error) {
