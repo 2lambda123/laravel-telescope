@@ -216,7 +216,7 @@ class JobWatcher extends Watcher
             Telescope::$shouldRecord = true;
         }
 
-        if (isset($batchId)) {
+        if (! is_null($batchId)) {
             $batch = app(BatchRepository::class)->find($batchId);
 
             if (is_null($batch)) {
