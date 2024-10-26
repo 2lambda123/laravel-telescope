@@ -33,13 +33,6 @@ class JobWatcherTest extends FeatureTestCase
         $app->get('config')->set('logging.default', 'syslog');
     }
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->createJobsTable();
-    }
-
     public function test_job_registers_entry()
     {
         $this->app->get(Dispatcher::class)->dispatch(new MyDatabaseJob('Awesome Laravel'));
@@ -130,33 +123,6 @@ class JobWatcherTest extends FeatureTestCase
         $this->assertSame(MyPushedJobClass::class, $entry->content['name']);
         $this->assertSame('default', $entry->content['queue']);
         $this->assertSame(['framework' => 'Laravel'], $entry->content['data']);
-    }
-
-    private function createJobsTable(): void
-    {
-        if (! Schema::hasTable('jobs')) {
-            Schema::create('jobs', function (Blueprint $table) {
-                $table->bigIncrements('id');
-                $table->string('queue')->index();
-                $table->longText('payload');
-                $table->unsignedTinyInteger('attempts');
-                $table->unsignedInteger('reserved_at')->nullable();
-                $table->unsignedInteger('available_at');
-                $table->unsignedInteger('created_at');
-            });
-        }
-
-        if (! Schema::hasTable('failed_jobs')) {
-            Schema::create('failed_jobs', function (Blueprint $table) {
-                $table->uuid('uuid');
-                $table->bigIncrements('id');
-                $table->text('connection');
-                $table->text('queue');
-                $table->longText('payload');
-                $table->longText('exception');
-                $table->timestamp('failed_at')->useCurrent();
-            });
-        }
     }
 }
 
