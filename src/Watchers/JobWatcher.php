@@ -4,6 +4,7 @@ namespace Laravel\Telescope\Watchers;
 
 use Illuminate\Bus\BatchRepository;
 use Illuminate\Contracts\Encryption\Encrypter;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Queue\Queue;
@@ -266,7 +267,7 @@ class JobWatcher extends Watcher
             $properties = ExtractProperties::from($command);
 
             return $properties['batchId'] ?? null;
-        } catch (\Exception|\Error) {
+        } catch (ModelNotFoundException $e) {
             if (preg_match('/"batchId";s:\d+:"([^"]+)"/', $data['command'], $matches)) {
                 return $matches[1];
             }

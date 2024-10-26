@@ -7,14 +7,17 @@ use Illuminate\Contracts\Bus\Dispatcher;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Foundation\Auth\User;
 use Illuminate\Queue\Jobs\Job;
 use Illuminate\Queue\QueueManager;
+use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Laravel\Telescope\EntryType;
 use Laravel\Telescope\Tests\FeatureTestCase;
 use Laravel\Telescope\Watchers\JobWatcher;
 use Orchestra\Testbench\Attributes\WithMigration;
+use Orchestra\Testbench\Factories\UserFactory;
 use Throwable;
 
 #[WithMigration('queue')]
@@ -124,6 +127,30 @@ class JobWatcherTest extends FeatureTestCase
         $this->assertSame('default', $entry->content['queue']);
         $this->assertSame(['framework' => 'Laravel'], $entry->content['data']);
     }
+
+    public function test_job_can_handle_deleted_serialized_model()
+    {
+        $user = UserFactory::new()->create();
+
+        $this->app->get(Dispatcher::class)->dispatch(
+            new MockedDeleteUserJob($user)
+        );
+
+        $this->artisan('queue:work', [
+            'connection' => 'database',
+            '--once' => true,
+        ])->run();
+
+        $entry = $this->loadTelescopeEntries()->first();
+
+        $this->assertSame(EntryType::JOB, $entry->type);
+        $this->assertSame('processed', $entry->content['status']);
+        $this->assertSame('database', $entry->content['connection']);
+        $this->assertSame(MockedDeleteUserJob::class, $entry->content['name']);
+        $this->assertSame('default', $entry->content['queue']);
+
+        $this->assertSame(sprintf('%s:%s', get_class($user), $user->getKey()), $entry->content['data']['user']);
+    }
 }
 
 class MockedBatchableJob implements ShouldQueue
@@ -142,6 +169,27 @@ class MockedBatchableJob implements ShouldQueue
     public function handle()
     {
         //
+    }
+}
+
+class MockedDeleteUserJob implements ShouldQueue
+{
+    use SerializesModels;
+
+    public $connection = 'database';
+
+    public $deleteWhenMissingModels = true;
+
+    public $user;
+
+    public function __construct(User $user)
+    {
+        $this->user = $user;
+    }
+
+    public function handle()
+    {
+        $this->user->delete();
     }
 }
 
