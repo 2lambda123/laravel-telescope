@@ -14,8 +14,10 @@ use Illuminate\Support\Str;
 use Laravel\Telescope\EntryType;
 use Laravel\Telescope\Tests\FeatureTestCase;
 use Laravel\Telescope\Watchers\JobWatcher;
+use Orchestra\Testbench\Attributes\WithMigration;
 use Throwable;
 
+#[WithMigration('queue')]
 class JobWatcherTest extends FeatureTestCase
 {
     protected function getEnvironmentSetUp($app)
