@@ -252,7 +252,7 @@ class JobWatcher extends Watcher
     }
 
     /**
-     * Get the Batch ID from the given payload.
+     * Get the batch ID from the given payload.
      *
      * @param  array  $data
      * @return int|null
